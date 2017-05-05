@@ -39,6 +39,30 @@ Theta2_grad = zeros(size(Theta2));
 %         cost function computation is correct by verifying the cost
 %         computed in ex4.m
 %
+X = [ones(m,1) X];
+
+% a1 = X; 
+a2 = sigmoid(Theta1 * X');
+a2 = [ones(m,1) a2'];
+
+h_theta = sigmoid(Theta2 * a2'); % h_theta equals z3
+
+yk = zeros(num_labels, m); 
+for i=1:m,
+  yk(y(i),i)=1;
+end
+
+% follow the form
+J = (1/m) * sum ( sum (  (-yk) .* log(h_theta)  -  (1-yk) .* log(1-h_theta) ));
+
+
+
+t1 = Theta1(:,2:size(Theta1,2));
+t2 = Theta2(:,2:size(Theta2,2));
+Reg = lambda  * (sum( sum ( t1.^ 2 )) + sum( sum ( t2.^ 2 ))) / (2*m);
+J = J + Reg;
+
+
 % Part 2: Implement the backpropagation algorithm to compute the gradients
 %         Theta1_grad and Theta2_grad. You should return the partial derivatives of
 %         the cost function with respect to Theta1 and Theta2 in Theta1_grad and
@@ -54,6 +78,32 @@ Theta2_grad = zeros(size(Theta2));
 %               over the training examples if you are implementing it for the 
 %               first time.
 %
+for t=1:m,
+    a1 = X(t,:); % X already have bias
+    z2 = Theta1 * a1';
+
+    a2 = sigmoid(z2);
+    a2 = [1 ; a2]; % add bias
+
+    z3 = Theta2 * a2;
+
+    a3 = sigmoid(z3); % final activation layer a3 == h(theta)
+
+    z2=[1; z2]; % bias
+
+    delta_3 = a3 - yk(:,t); % y(k) trick - getting columns of t element
+    delta_2 = (Theta2' * delta_3) .* sigmoidGradient(z2);
+
+    % skipping sigma2(0) 
+    delta_2 = delta_2(2:end); 
+
+    Theta2_grad = Theta2_grad + delta_3 * a2';
+    Theta1_grad = Theta1_grad + delta_2 * a1; 
+end;
+
+% Theta1_grad = Theta1_grad ./ m;
+% Theta2_grad = Theta2_grad ./ m;
+
 % Part 3: Implement regularization with the cost function and gradients.
 %
 %         Hint: You can implement this around the code for
@@ -62,6 +112,13 @@ Theta2_grad = zeros(size(Theta2));
 %               and Theta2_grad from Part 2.
 %
 
+    Theta1_grad(:, 1) = Theta1_grad(:, 1) ./ m;
+    
+    Theta1_grad(:, 2:end) = Theta1_grad(:, 2:end) ./ m + ((lambda/m) * Theta1(:, 2:end));
+    
+    Theta2_grad(:, 1) = Theta2_grad(:, 1) ./ m;
+    
+    Theta2_grad(:, 2:end) = Theta2_grad(:, 2:end) ./ m + ((lambda/m) * Theta2(:, 2:end));
 
 
 
